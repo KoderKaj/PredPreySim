@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.Threading;
 using System.Windows.Forms;
 
 namespace RGB
@@ -12,14 +13,18 @@ namespace RGB
         List<Food> foods = new List<Food> { };
         List<Food> fRemove = new List<Food> { };
         List<Food> fAdd = new List<Food> { };
+        List<Hunter> hunters = new List<Hunter> { };
+        List<Hunter> hAdd = new List<Hunter> { };
+        List<Hunter> hRemove = new List<Hunter> { };
         public Form1()
         {
             InitializeComponent();
             maxX = this.ClientSize.Width;
             maxY = this.ClientSize.Height;
             foods.Add(new Food(10, 10));
-            foods.Add(new Food(50, 100));
             foods.Add(new Food(100, 100));
+            foods.Add(new Food(130, 130));
+            hunters.Add(new Hunter(200, 200));
         }
 
         private void Form1_Paint(object sender, PaintEventArgs e)
@@ -28,6 +33,10 @@ namespace RGB
             foreach (Food food in foods)
             {
                 g.FillEllipse(food.getCol(), new RectangleF(food.getX(), food.getY(), size, size)); ;
+            }
+            foreach (Hunter hunter in hunters)
+            {
+                g.FillEllipse(hunter.getCol(), new RectangleF(hunter.getX(), hunter.getY(), size, size));
             }
         }
 
@@ -39,7 +48,7 @@ namespace RGB
             {
                 fAdd.Add(food.move(foods, maxX, maxY));
             }
-            if (fAdd.Count > 0 && foods.Count < spriteMax)
+            if (fAdd.Count > 0 && foods.Count + hunters.Count < spriteMax)
             {
                 foreach (Food food in fAdd)
                 {
@@ -47,14 +56,59 @@ namespace RGB
                 }
             }
             fAdd.Clear();
+            foreach(Hunter hunter in hunters)
+            {
+                List<Sprite> sprites = hunter.move(foods, maxX, maxY);
+                if (sprites.Count > 0)
+                {
+                    if (sprites.Count == 1)
+                    {
+                        hRemove.Add(hunter);
+                    }
+                    else
+                    {
+                        fRemove.Add((Food)sprites[1]);
+                        if (sprites[0] != null)
+                        {
+                            hAdd.Add((Hunter)sprites[0]);
+                        }
+                    }
+                }
+            }
+            if(fRemove.Count > 0)
+            {
+                foreach(Food food in fRemove)
+                {
+                    foods.Remove(food);
+                }
+                fRemove.Clear();
+                if(hAdd.Count > 0 && foods.Count + hunters.Count < spriteMax)
+                {
+                    foreach(Hunter hunter in hAdd)
+                    {
+                        hunters.Add(hunter);
+                    }
+                    hAdd.Clear();
+                }
+            }
+            else if(hRemove.Count > 0)
+            {
+                foreach(Hunter hunter in hRemove)
+                {
+                    hunters.Remove(hunter);
+                }
+                hRemove.Clear();
+            }
             this.Invalidate();
         }
     }
     public class Sprite
     {
         public Sprite(){ }
-        protected float velX, velY, x, y, speed = 10;
+        protected float velX, velY, x, y, speed = 20;
+        protected int cooldown = 0;
         protected Brush colour;
+        protected Food target;
         public Brush getCol()
         {return colour;}
         public void setXY(float setX, float setY)
@@ -64,18 +118,18 @@ namespace RGB
         }
         protected float[] targetFood(List<Food> foods)
         {
-            Food target = null;
+            target = null;
             float diffX = 0,
                 diffY = 0,
                 magnitude = 10,
-                prevMag = 0,
+                prevMag = 999,
                 newDx, newDy;
             foreach (Food potential in foods)
             {
                 newDx = potential.x - x;
                 newDy = y - potential.y;
                 magnitude = (float)Math.Sqrt(newDx * newDx + newDy * newDy);
-                if (magnitude > prevMag)
+                if (magnitude < prevMag)
                 {
                     prevMag = magnitude;
                     target = potential;
@@ -113,8 +167,9 @@ namespace RGB
     public class Food : Sprite
     {
         static Random rand = new Random();
-        int maxDistance = 10, cooldown = 0;// rand.Next(0,20);
-        public Food(float newX, float newY){setXY(newX,newY); colour = Brushes.Blue; }
+        
+        int maxDistance = 10;
+        public Food(float newX, float newY){setXY(newX,newY); colour = Brushes.Blue; cooldown = rand.Next(0,20);}
         private void randMove(float maxX, float maxY)
         {
             velX = rand.Next(-(int)(speed*1.5), (int)(speed*1.5));
@@ -153,11 +208,45 @@ namespace RGB
     }
     public class Hunter : Sprite
     {
-        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; }
-        public Sprite[] move()
+        float eatDistance = 5, ttl = 200;
+        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 100; speed = 11; }
+        public List<Sprite> move(List<Food> foods, float maxX, float maxY)
         {
-
-            return null;
+            List<Sprite> sprites = new List<Sprite> { };
+            if (cooldown <= 0)
+            {
+                ttl--;
+                if (ttl > 0)
+                {
+                    speed = 20;
+                    float[] magdXdY = targetFood(foods);
+                    if (magdXdY[0] < eatDistance && ttl > 50)
+                    {
+                        sprites.Add(new Hunter(x, y));
+                        sprites.Add(target);
+                        ttl = 150;
+                        cooldown = 200;
+                    }
+                    else if (magdXdY[0] < eatDistance)
+                    {
+                        sprites.Add(null);
+                        sprites.Add(target);
+                        ttl = 200;
+                        cooldown = 100;
+                    }
+                    else
+                    {
+                        moveToFood(new float[2] { magdXdY[1], magdXdY[2] }, maxX, maxY);
+                        speed += 20 / ttl;
+                    }
+                }
+                else
+                {
+                    sprites.Add(this);
+                }
+            }
+            else { cooldown--; }
+            return sprites;
         }
     }
 }
