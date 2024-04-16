@@ -140,8 +140,8 @@ namespace RGB
                     }
                 }
             }
-            diffX /= magnitude;
-            diffY /= magnitude;
+            diffX /= prevMag;
+            diffY /= prevMag;
             return new float[] { magnitude, diffX, diffY };
         }
         protected void moveToFood(float[] dXdY, float maxX, float maxY)
@@ -211,7 +211,7 @@ namespace RGB
     }
     public class Hunter : Sprite
     {
-        float eatDistance = 5, ttl = 200;
+        float eatDistance = 10, ttl = 200;
         public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 40; speed = 25; }
         public List<Sprite> move(List<Food> foods, float maxX, float maxY)
         {
@@ -222,14 +222,14 @@ namespace RGB
                 if (ttl > 0)
                 {
                     float[] magdXdY = targetFood(foods);
-                    if (magdXdY[0] < eatDistance && ttl > 50)
+                    if (magdXdY[0] <= eatDistance && ttl > 50)
                     {
                         sprites.Add(new Hunter(x, y));
                         sprites.Add(target);
                         ttl = 150;
                         cooldown = 200;
                     }
-                    else if (magdXdY[0] < eatDistance)
+                    else if (magdXdY[0] <= eatDistance)
                     {
                         sprites.Add(null);
                         sprites.Add(target);
