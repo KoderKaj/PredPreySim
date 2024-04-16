@@ -105,7 +105,7 @@ namespace RGB
     public class Sprite
     {
         public Sprite(){ }
-        protected float velX, velY, x, y, speed = 20;
+        protected float velX, velY, x, y, speed = 15;
         protected int cooldown = 0;
         protected Brush colour;
         protected Food target;
@@ -126,15 +126,18 @@ namespace RGB
                 newDx, newDy;
             foreach (Food potential in foods)
             {
-                newDx = potential.x - x;
-                newDy = y - potential.y;
-                magnitude = (float)Math.Sqrt(newDx * newDx + newDy * newDy);
-                if (magnitude < prevMag)
+                if (potential != this)
                 {
-                    prevMag = magnitude;
-                    target = potential;
-                    diffX = newDx;
-                    diffY = newDy;
+                    newDx = potential.x - x;
+                    newDy = y - potential.y;
+                    magnitude = (float)Math.Sqrt(newDx * newDx + newDy * newDy);
+                    if (magnitude < prevMag)
+                    {
+                        prevMag = magnitude;
+                        target = potential;
+                        diffX = newDx;
+                        diffY = newDy;
+                    }
                 }
             }
             diffX /= magnitude;
@@ -169,11 +172,11 @@ namespace RGB
         static Random rand = new Random();
         
         int maxDistance = 10;
-        public Food(float newX, float newY){setXY(newX,newY); colour = Brushes.Blue; cooldown = rand.Next(0,20);}
+        public Food(float newX, float newY) { setXY(newX, newY); colour = Brushes.Blue; cooldown = rand.Next(0,20);}
         private void randMove(float maxX, float maxY)
         {
-            velX = rand.Next(-(int)(speed*1.5), (int)(speed*1.5));
-            velY = (float)Math.Sqrt((speed*1.5) * (speed*1.5) - velX * velX);
+            velX = rand.Next(-(int)(speed*1.1), (int)(speed*1.1));
+            velY = (float)Math.Sqrt((speed*1.1) * (speed*1.1) - velX * velX);
             if (velX < -speed * 0.5 || velX > speed * 0.5)
             {
                 velY *= -1;
@@ -184,10 +187,10 @@ namespace RGB
         }
         public Food move(List<Food> foods, float maxX, float maxY)
         {
-            if (cooldown == 0)
+            if (cooldown <= 0)
             {
                 float[] magdXdY = targetFood(foods);
-                if (magdXdY[0] <= maxDistance*0.2) { randMove(maxX, maxY); }
+                if (magdXdY[0] <= maxDistance*0.5) { randMove(maxX, maxY); }
                 else if (magdXdY[0] < maxDistance)
                 {
                     cooldown = rand.Next(90,110);
@@ -209,7 +212,7 @@ namespace RGB
     public class Hunter : Sprite
     {
         float eatDistance = 5, ttl = 200;
-        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 100; speed = 11; }
+        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 40; speed = 25; }
         public List<Sprite> move(List<Food> foods, float maxX, float maxY)
         {
             List<Sprite> sprites = new List<Sprite> { };
@@ -218,7 +221,6 @@ namespace RGB
                 ttl--;
                 if (ttl > 0)
                 {
-                    speed = 20;
                     float[] magdXdY = targetFood(foods);
                     if (magdXdY[0] < eatDistance && ttl > 50)
                     {
@@ -237,7 +239,6 @@ namespace RGB
                     else
                     {
                         moveToFood(new float[2] { magdXdY[1], magdXdY[2] }, maxX, maxY);
-                        speed += 20 / ttl;
                     }
                 }
                 else
