@@ -226,15 +226,15 @@ namespace RGB
                     {
                         sprites.Add(new Hunter(x, y));
                         sprites.Add(target);
-                        ttl = 150;
-                        cooldown = 200;
+                        ttl = 200;
+                        cooldown = 100;
                     }
                     else if (magdXdY[0] <= eatDistance)
                     {
                         sprites.Add(null);
                         sprites.Add(target);
-                        ttl = 200;
-                        cooldown = 100;
+                        ttl = 250;
+                        cooldown = 50;
                     }
                     else
                     {
