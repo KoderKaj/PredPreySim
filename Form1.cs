@@ -171,7 +171,7 @@ namespace RGB
     {
         static Random rand = new Random();
         
-        int maxDistance = 10;
+        int maxDistance = 21;
         public Food(float newX, float newY) { setXY(newX, newY); colour = Brushes.Blue; cooldown = rand.Next(0,20);}
         private void randMove(float maxX, float maxY)
         {
@@ -190,7 +190,7 @@ namespace RGB
             if (cooldown <= 0)
             {
                 float[] magdXdY = targetFood(foods);
-                if (magdXdY[0] <= maxDistance*0.5) { randMove(maxX, maxY); }
+                if (magdXdY[0] <= maxDistance*0.7) { randMove(maxX, maxY); }
                 else if (magdXdY[0] < maxDistance)
                 {
                     cooldown = rand.Next(90,110);
@@ -211,8 +211,8 @@ namespace RGB
     }
     public class Hunter : Sprite
     {
-        float eatDistance = 10, ttl = 200;
-        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 40; speed = 25; }
+        float eatDistance = 23, ttl = 200;
+        public Hunter(float newX, float newY) { setXY(newX, newY); colour = Brushes.Red; cooldown = 50; speed = 25; }
         public List<Sprite> move(List<Food> foods, float maxX, float maxY)
         {
             List<Sprite> sprites = new List<Sprite> { };
